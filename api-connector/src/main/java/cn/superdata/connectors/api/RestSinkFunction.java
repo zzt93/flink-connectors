@@ -6,7 +6,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.SerializableObject;
-import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
@@ -15,7 +14,6 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 
 import java.io.IOException;
-import java.net.Socket;
 
 import static org.apache.flink.util.Preconditions.*;
 
@@ -81,8 +79,8 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 		httpPost.setHeader("Content-type", "application/json");
 
 		CloseableHttpResponse response = client.execute(httpPost);
+		log.info("{}", response);
 		if (response.getCode() != HttpStatus.SC_OK) {
-
 		}
 	}
 
@@ -107,7 +105,7 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 			log.error(
 					"Failed to send message '"
 							+ value
-							+ "' to socket server at "
+							+ "' to http server at "
 							+ url
 							+ ". Trying to reconnect...",
 					e);
@@ -127,7 +125,7 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 							client.close();
 						}
 					} catch (IOException ee) {
-						log.error("Could not close socket from failed write attempt", ee);
+						log.error("Could not close http from failed write attempt", ee);
 					}
 
 					// try again
@@ -145,7 +143,7 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 					} catch (IOException ee) {
 						lastException = ee;
 						log.error(
-								"Re-connect to socket server and send message failed. Retry time(s): "
+								"Re-connect to http server and send message failed. Retry time(s): "
 										+ retries,
 								ee);
 					}
@@ -160,7 +158,7 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 					throw new IOException(
 							"Failed to send message '"
 									+ value
-									+ "' to socket server at "
+									+ "' to http server at "
 									+ url
 									+ ". Failed after "
 									+ retries
