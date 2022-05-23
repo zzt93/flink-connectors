@@ -12,21 +12,14 @@ import org.apache.flink.table.types.DataType;
 
 public class RestDynamicTableSource implements ScanTableSource {
 
-	private final String hostname;
-	private final int port;
-	private final byte byteDelimiter;
 	private final DecodingFormat<DeserializationSchema<RowData>> decodingFormat;
 	private final DataType producedDataType;
+	private final String url;
 
 	public RestDynamicTableSource(
-			String hostname,
-			int port,
-			byte byteDelimiter,
-			DecodingFormat<DeserializationSchema<RowData>> decodingFormat,
+			String url, DecodingFormat<DeserializationSchema<RowData>> decodingFormat,
 			DataType producedDataType) {
-		this.hostname = hostname;
-		this.port = port;
-		this.byteDelimiter = byteDelimiter;
+		this.url = url;
 		this.decodingFormat = decodingFormat;
 		this.producedDataType = producedDataType;
 	}
@@ -48,7 +41,7 @@ public class RestDynamicTableSource implements ScanTableSource {
 				producedDataType);
 
 		final SourceFunction<RowData> sourceFunction = new RestSourceFunction(
-				hostname, ""
+				url, ""
 				, deserializer);
 
 		return SourceFunctionProvider.of(sourceFunction, false);
@@ -56,7 +49,7 @@ public class RestDynamicTableSource implements ScanTableSource {
 
 	@Override
 	public DynamicTableSource copy() {
-		return new RestDynamicTableSource(hostname, port, byteDelimiter, decodingFormat, producedDataType);
+		return new RestDynamicTableSource(url, decodingFormat, producedDataType);
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package cn.superdata.connectors.api;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.table.data.RowData;
@@ -26,19 +27,19 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 	private final SerializableObject lock = new SerializableObject();
 
 	private final String url;
-	private final String token;
 	private final int maxNumRetries;
+	private final SerializationSchema<RowData> serializer;
 	private volatile boolean isRunning = true;
 	private transient CloseableHttpClient client;
 
-	public RestSinkFunction(String url, String token, int maxNumRetries) {
+	public RestSinkFunction(String url, int maxNumRetries, SerializationSchema<RowData> serializer) {
 		this.url = url;
 		checkArgument(
 				maxNumRetries >= -1,
 				"maxNumRetries must be zero or larger (num retries), or -1 (infinite retries)");
 
-		this.token = token;
 		this.maxNumRetries = maxNumRetries;
+		this.serializer = serializer;
 	}
 
 	@Override
@@ -171,6 +172,6 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 	}
 
 	private String serialize(RowData value) {
-		return null;
+		return new String(serializer.serialize(value));
 	}
 }

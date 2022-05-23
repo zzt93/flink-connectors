@@ -1,10 +1,12 @@
 package cn.superdata.connectors.api;
 
 import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.table.connector.format.DecodingFormat;
+import org.apache.flink.table.connector.format.EncodingFormat;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.data.RowData;
@@ -12,6 +14,7 @@ import org.apache.flink.table.factories.DeserializationFormatFactory;
 import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.factories.SerializationFormatFactory;
 import org.apache.flink.table.types.DataType;
 
 import java.util.HashSet;
@@ -38,6 +41,7 @@ public class RestDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 	public Set<ConfigOption<?>> requiredOptions() {
 		final Set<ConfigOption<?>> options = new HashSet<>();
 		options.add(URL);
+		options.add(FactoryUtil.FORMAT); // use pre-defined option for format
 		return options;
 	}
 
@@ -72,8 +76,7 @@ public class RestDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 				context.getCatalogTable().getResolvedSchema().toPhysicalRowDataType();
 
 		// create and return dynamic table source
-//		return new SocketDynamicTableSource(hostname, port, byteDelimiter, decodingFormat, producedDataType);
-		return null;
+		return new RestDynamicTableSource(url, decodingFormat, producedDataType);
 	}
 
 	@Override
@@ -83,15 +86,17 @@ public class RestDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		final FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
 
 		// discover a suitable decoding format
-		final DecodingFormat<DeserializationSchema<RowData>> decodingFormat = helper.discoverDecodingFormat(
-				DeserializationFormatFactory.class, FactoryUtil.FORMAT);
+		final EncodingFormat<SerializationSchema<RowData>> encodingFormat = helper.discoverEncodingFormat(
+				SerializationFormatFactory.class, FactoryUtil.FORMAT);
 
 		// validate all options
 		helper.validate();
+		final DataType producedDataType =
+				context.getCatalogTable().getResolvedSchema().toPhysicalRowDataType();
 
 		// get the validated options
 		final ReadableConfig options = helper.getOptions();
 		final String url = options.get(URL);
-		return new RestTableSink(url, options.get(MAX_RETRY));
+		return new RestTableSink(url, options.get(MAX_RETRY), encodingFormat, producedDataType);
 	}
 }
