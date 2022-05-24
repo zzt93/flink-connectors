@@ -8,6 +8,12 @@ import org.apache.flink.table.connector.sink.SinkFunctionProvider;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
 
+/**
+ * CREATE TABLE T (Gearbox_Drive_Temperature int, Gearbox_None_Drive_Temperature int, Generator_Cold_Air_Temperature int, Generator_None_Drive_Temperature int, Generator_Speed int, Generator_U_Phase_Temperature int, Generator_V_Phase_Temperature int, `POWER` int)
+ * WITH ('connector' = 'rest', 'url'='https://xxx/ai/api/predict/2?token=ccc', 'format'='json');
+ *
+ * insert into T values(0,0,0,0,0,0,0,0);
+ */
 public class RestTableSink implements DynamicTableSink {
 	private final String url;
 	private final int maxRetries;

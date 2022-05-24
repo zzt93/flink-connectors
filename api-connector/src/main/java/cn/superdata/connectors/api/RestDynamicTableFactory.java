@@ -76,7 +76,7 @@ public class RestDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 				context.getCatalogTable().getResolvedSchema().toPhysicalRowDataType();
 
 		// create and return dynamic table source
-		return new RestDynamicTableSource(url, decodingFormat, producedDataType);
+		return new RestTableSource(url, decodingFormat, producedDataType, options.get(MAX_RETRY));
 	}
 
 	@Override

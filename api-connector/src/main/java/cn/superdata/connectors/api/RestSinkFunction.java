@@ -6,12 +6,8 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.SerializableObject;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.HttpStatus;
-import org.apache.hc.core5.http.io.entity.StringEntity;
 
 import java.io.IOException;
 
@@ -70,26 +66,12 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 		createConnection();
 	}
 
-	private void post(String json) throws IOException {
-		HttpPost httpPost = new HttpPost(url);
-
-		StringEntity entity = new StringEntity(json);
-		httpPost.setEntity(entity);
-		httpPost.setHeader("Accept", "application/json");
-		httpPost.setHeader("Content-type", "application/json");
-
-		CloseableHttpResponse response = client.execute(httpPost);
-		log.info("{}", response);
-		if (response.getCode() != HttpStatus.SC_OK) {
-		}
-	}
-
 	@Override
 	public void invoke(RowData value, Context context) throws Exception {
 		String json = serialize(value);
 
 		try {
-			post(json);
+			HttpClientUtil.post(client, url, json);
 		} catch (IOException e) {
 			// if no re-tries are enable, fail immediately
 			if (maxNumRetries == 0) {
@@ -136,7 +118,7 @@ public class RestSinkFunction extends RichSinkFunction<RowData> {
 						createConnection();
 
 						// re-try the write
-						post(json);
+						HttpClientUtil.post(client, url, json);
 
 						// success!
 						return;
